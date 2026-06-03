@@ -22,8 +22,9 @@ const createShop = async (req, res, next) => {
     api_key: process.env.CLOUDINARY_API_KEY,
     api_secret: process.env.CLOUDINARY_API_SECRET ? "SET" : "MISSING",
   });
-      const filePath = path.join(__dirname, "..", req.file.path);
-      imageFile = await cloudinary.uploader.upload(filePath);
+     const b64 = Buffer.from(req.file.buffer).toString("base64");
+    const dataURI = `data:${req.file.mimetype};base64,${b64}`;
+    imageFile = await cloudinary.uploader.upload(dataURI);
     } catch (err) {
       console.log("CLOUDINARY ERROR:", JSON.stringify(err));
       console.log("CLOUDINARY ERROR full:", err);

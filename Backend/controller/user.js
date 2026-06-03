@@ -19,7 +19,9 @@ const createUser = async (req, res, next) => {
 
     let imageFile;
     try {
-      imageFile = await cloudinary.uploader.upload(path.join(__dirname, "..", req.file.path));
+      const b64 = Buffer.from(req.file.buffer).toString("base64");
+const dataURI = `data:${req.file.mimetype};base64,${b64}`;
+imageFile = await cloudinary.uploader.upload(dataURI);
     } catch (err) {
       return next(
         new ErrorHandler("Could not upload image, please try again.", 500)
@@ -204,7 +206,9 @@ const updateAvatar = catchAsyncErrors(async (req, res, next) => {
 
     let imageFile;
     try {
-      imageFile = await cloudinary.uploader.upload(req.file.path);
+      const b64 = Buffer.from(req.file.buffer).toString("base64");
+const dataURI = `data:${req.file.mimetype};base64,${b64}`;
+imageFile = await cloudinary.uploader.upload(dataURI);
     } catch (err) {
       return next(
         new ErrorHandler("Could not upload image, please try again.", 500)
