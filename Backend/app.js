@@ -15,7 +15,11 @@ const compression = require("compression");
 
 app.use(express.json());
 
-app.use(cors());
+app.use(cors({
+  origin: "https://shop-nest-bice.vercel.app",
+  credentials: true,
+}));
+
 
 app.use(
   helmet({

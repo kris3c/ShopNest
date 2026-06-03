@@ -45,7 +45,7 @@ const createShop = async (req, res, next) => {
 
     const imagePath = seller.avatarId;
     const activationToken = createActivationToken(seller);
-    const activationUrl = `http://localhost:3000/seller/activation/${activationToken}`;
+    const activationUrl = `https://shop-nest-bice.vercel.app/seller/activation/${activationToken}`;
 
     try {
       await sendMail({
