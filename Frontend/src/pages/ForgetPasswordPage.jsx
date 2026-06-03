@@ -24,7 +24,7 @@ const ForgetPasswordPage = () => {
 
   const submitHandler = async (values) => {
     await axios
-      .post(`http://localhost:8000/user/forget-password`, {
+      .post(`https://shopnest-backend-07zr.onrender.com/user/forget-password`, {
         email: values.email,
       })
       .then((res) => {

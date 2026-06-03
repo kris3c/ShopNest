@@ -14,7 +14,7 @@ const Login = ({ onClick }) => {
 
   const submitHandler = async (values) => {
     await axios
-      .post(`http://localhost:8000/user/login-user`, {
+      .post(`https://shopnest-backend-07zr.onrender.com/user/login-user`, {
         email: values.email,
         password: values.password,
       })

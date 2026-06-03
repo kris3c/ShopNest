@@ -18,7 +18,7 @@ const ReviewForm = ({ setOpen, open, data }) => {
 
     await axios
       .put(
-        `http://localhost:8000/product/create-new-review`,
+        `https://shopnest-backend-07zr.onrender.com/product/create-new-review`,
         {
           user,
           rating: values.rating,

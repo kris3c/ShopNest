@@ -42,7 +42,7 @@ const Payment = () => {
 
     try {
       const { data } = await axios.post(
-        `http://localhost:8000/payment/process`,
+        `https://shopnest-backend-07zr.onrender.com/payment/process`,
         paymentData,
         {
           headers: {
@@ -72,7 +72,7 @@ const Payment = () => {
 
           await axios
             .post(
-              `http://localhost:8000/order/create-order`,
+              `https://shopnest-backend-07zr.onrender.com/order/create-order`,
               order,
               {
                 headers: {
@@ -103,7 +103,7 @@ const Payment = () => {
 
       await axios
         .post(
-          `http://localhost:8000/order/create-order`,
+          `https://shopnest-backend-07zr.onrender.com/order/create-order`,
           order,
           {
             headers: {

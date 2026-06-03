@@ -25,7 +25,7 @@ const AllCoupons = () => {
     setIsLoading(true);
     axios
       .get(
-        `http://localhost:8000/coupon-code/get-coupons/${seller?._id}`,
+        `https://shopnest-backend-07zr.onrender.com/coupon-code/get-coupons/${seller?._id}`,
         {
           headers: {
             Authorization: localStorage.getItem("seller-token"),
@@ -44,7 +44,7 @@ const AllCoupons = () => {
   const handleDelete = async (id) => {
     axios
       .delete(
-        `http://localhost:8000/coupon-code/delete-coupon/${id}`,
+        `https://shopnest-backend-07zr.onrender.com/coupon-code/delete-coupon/${id}`,
         {
           headers: {
             Authorization: localStorage.getItem("seller-token"),
@@ -66,7 +66,7 @@ const AllCoupons = () => {
     setIsLoading(true);
     await axios
       .post(
-        `http://localhost:8000/coupon-code/create-coupon-code`,
+        `https://shopnest-backend-07zr.onrender.com/coupon-code/create-coupon-code`,
         {
           name: values.name,
           discountPercentage: values.discountPercentage,

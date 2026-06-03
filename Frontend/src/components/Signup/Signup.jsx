@@ -31,7 +31,7 @@ const Signup = ({ onClick }) => {
     }
     axios
       .post(
-        `http://localhost:8000/user/create-user`,
+        `https://shopnest-backend-07zr.onrender.com/user/create-user`,
         fd,
         config
       )

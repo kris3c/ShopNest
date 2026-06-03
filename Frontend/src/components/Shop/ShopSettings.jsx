@@ -21,7 +21,7 @@ const ShopSettings = () => {
 
     await axios
       .put(
-        `http://localhost:8000/shop/update-avatar`,
+        `https://shopnest-backend-07zr.onrender.com/shop/update-avatar`,
         formData,
         {
           headers: {
@@ -71,7 +71,7 @@ const ShopSettings = () => {
   const submitHandler = async (values) => {
     await axios
       .put(
-        `http://localhost:8000/shop/update-info`,
+        `https://shopnest-backend-07zr.onrender.com/shop/update-info`,
         {
           name: values.name,
           address: values.address,

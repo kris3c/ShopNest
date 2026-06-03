@@ -39,7 +39,7 @@ const ChangePassword = () => {
 
     await axios
       .put(
-        `http://localhost:8000/shop/change-password`,
+        `https://shopnest-backend-07zr.onrender.com/shop/change-password`,
         {
           oldPassword: values.oldPassword,
           password: values.password,

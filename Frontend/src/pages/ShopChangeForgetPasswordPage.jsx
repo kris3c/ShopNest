@@ -32,7 +32,7 @@ const ShopChangeForgetPasswordPage = () => {
   const submitHandler = async (values) => {
     await axios
       .put(
-        `http://localhost:8000/shop/change-forget-password/${token}`,
+        `https://shopnest-backend-07zr.onrender.com/shop/change-forget-password/${token}`,
         {
           oldPassword: values.oldPassword,
           password: values.password,

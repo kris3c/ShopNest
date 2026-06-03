@@ -31,7 +31,7 @@ const SignupSeller = ({ onClick }) => {
     }
     axios
       .post(
-        `http://localhost:8000/shop/create-shop`,
+        `https://shopnest-backend-07zr.onrender.com/shop/create-shop`,
         fd,
         config
       )

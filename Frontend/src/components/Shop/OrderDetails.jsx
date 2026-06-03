@@ -25,7 +25,7 @@ const OrderDetails = () => {
   const orderUpdateHandler = async () => {
     await axios
       .put(
-        `http://localhost:8000/order/update-order-status/${id}`,
+        `https://shopnest-backend-07zr.onrender.com/order/update-order-status/${id}`,
         { status },
         {
           headers: {
@@ -42,7 +42,7 @@ const OrderDetails = () => {
   const refundOrderUpdateHandler = async () => {
     await axios
       .put(
-        `http://localhost:8000/order/accept-refund/${id}`,
+        `https://shopnest-backend-07zr.onrender.com/order/accept-refund/${id}`,
         {
           status,
         },

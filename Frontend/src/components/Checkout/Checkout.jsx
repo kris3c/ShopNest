@@ -94,7 +94,7 @@ const Checkout = () => {
 
     await axios
       .get(
-        `http://localhost:8000/coupon-code/apply-coupon-code/${couponCode}`
+        `https://shopnest-backend-07zr.onrender.com/coupon-code/apply-coupon-code/${couponCode}`
       )
       .then((res) => {
         if (res.data.couponCode === null) {

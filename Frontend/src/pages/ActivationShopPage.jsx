@@ -16,7 +16,7 @@ const ActivationShopPage = () => {
       const activationEmail = async () => {
         try {
           await axios.post(
-            `http://localhost:8000/shop/activation`,
+            `https://shopnest-backend-07zr.onrender.com/shop/activation`,
             {
               activation_token,
             }

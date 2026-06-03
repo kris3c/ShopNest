@@ -75,7 +75,7 @@ const ProfileContent = ({ active }) => {
 
     await axios
       .put(
-        `http://localhost:8000/user/update-avatar`,
+        `https://shopnest-backend-07zr.onrender.com/user/update-avatar`,
         formData,
         {
           headers: {

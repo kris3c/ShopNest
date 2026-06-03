@@ -20,7 +20,7 @@ const ShopInfo = ({ isOwner }) => {
     setIsLoading(true);
     axios
       .get(
-        `http://localhost:8000/shop/get-shop-info/${id}`
+        `https://shopnest-backend-07zr.onrender.com/shop/get-shop-info/${id}`
       )
       .then((res) => {
         setData(res.data.shop);
