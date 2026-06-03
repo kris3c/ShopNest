@@ -5,7 +5,7 @@ const jwt = require("jsonwebtoken");
 const sendMail = require("../utils/sendMail");
 const sendToken = require("../utils/jwtToken");
 const cloudinary = require("../utils/cloudinary");
-const path = require("path");  //
+
 const createUser = async (req, res, next) => {
   let imagePath;
 
@@ -20,12 +20,11 @@ const createUser = async (req, res, next) => {
     let imageFile;
     try {
       const b64 = Buffer.from(req.file.buffer).toString("base64");
-const dataURI = `data:${req.file.mimetype};base64,${b64}`;
-imageFile = await cloudinary.uploader.upload(dataURI);
+      const dataURI = `data:${req.file.mimetype};base64,${b64}`;
+      imageFile = await cloudinary.uploader.upload(dataURI);
     } catch (err) {
-      return next(
-        new ErrorHandler("Could not upload image, please try again.", 500)
-      );
+      console.log("CLOUDINARY ERROR:", err.message);
+      return next(new ErrorHandler("Could not upload image, please try again.", 500));
     }
 
     const user = {
@@ -39,36 +38,38 @@ imageFile = await cloudinary.uploader.upload(dataURI);
     imagePath = user.avatarId;
 
     const activationToken = createActivationToken(user);
-
     const activationUrl = `https://shop-nest-bice.vercel.app/activation/${activationToken}`;
-    
+
+    console.log("Sending activation email to:", email);
+
     try {
       await sendMail({
         email: user.email,
         subject: "Activate your email",
-        message: `
-        <h2>Hello there!, Chech this link to activate your account <a href="${activationUrl}">click me</a></h2>
-        `,
+        message: `<h2>Hello there! Check this link to activate your account: <a href="${activationUrl}">click me</a></h2>`,
       });
+      console.log("Email sent successfully");
       res.status(201).json({
         success: true,
         message: `please check your email to activate your account!`,
       });
     } catch (error) {
+      console.log("EMAIL ERROR:", error.message);
       try {
         await cloudinary.uploader.destroy(imagePath);
       } catch (err) {
-        console.log(`failed deleting image:${imagePath}`);
+        console.log(`failed deleting image: ${imagePath}`);
       }
       return next(new ErrorHandler(error.message, 500));
     }
   } catch (err) {
+    console.log("OUTER ERROR:", err.message);
     try {
       await cloudinary.uploader.destroy(imagePath);
     } catch (err) {
-      console.log(`failed deleting image:${imagePath}`);
+      console.log(`failed deleting image: ${imagePath}`);
     }
-    return next(new ErrorHandler(err.message), 400);
+    return next(new ErrorHandler(err.message, 400));
   }
 };
 
@@ -77,8 +78,7 @@ const activation = catchAsyncErrors(async (req, res, next) => {
 
   try {
     const { activation_token } = req.body;
-
-    const newUser = jwt.verify(activation_token, "YOUR_SECRET_KEY");
+    const newUser = jwt.verify(activation_token, process.env.JWT_SECRET_KEY);
 
     if (!newUser) {
       return next(new ErrorHandler("Invalid token", 400));
@@ -89,25 +89,17 @@ const activation = catchAsyncErrors(async (req, res, next) => {
     const { name, email, password, avatar, avatarId } = newUser;
 
     let user = await User.findOne({ email });
-
     if (user) {
       return next(new ErrorHandler("User already exists", 400));
     }
 
-    user = await User.create({
-      name,
-      email,
-      avatar,
-      avatarId,
-      password,
-    });
-
+    user = await User.create({ name, email, avatar, avatarId, password });
     sendToken(user, 201, res);
   } catch (err) {
     try {
       await cloudinary.uploader.destroy(imagePath);
     } catch (err) {
-      console.log(`failed deleting image:${imagePath}`);
+      console.log(`failed deleting image: ${imagePath}`);
     }
     return next(new ErrorHandler(err.message, 500));
   }
@@ -118,21 +110,17 @@ const loginUser = catchAsyncErrors(async (req, res, next) => {
     const { email, password } = req.body;
 
     if (!email || !password) {
-      return next(new ErrorHandler("Please provide the all fields!", 400));
+      return next(new ErrorHandler("Please provide all fields!", 400));
     }
 
     const user = await User.findOne({ email }).select("+password");
-
     if (!user) {
-      return next(new ErrorHandler("User doesn't exists!", 400));
+      return next(new ErrorHandler("User doesn't exist!", 400));
     }
 
     const isPasswordValid = await user.comparePassword(password);
-
     if (!isPasswordValid) {
-      return next(
-        new ErrorHandler("Please provide the correct information", 400)
-      );
+      return next(new ErrorHandler("Please provide the correct information", 400));
     }
 
     sendToken(user, 201, res);
@@ -144,15 +132,10 @@ const loginUser = catchAsyncErrors(async (req, res, next) => {
 const getUser = catchAsyncErrors(async (req, res, next) => {
   try {
     const user = await User.findById(req.user.id);
-
     if (!user) {
-      return next(new ErrorHandler("User doesn't exists", 400));
+      return next(new ErrorHandler("User doesn't exist", 400));
     }
-
-    res.status(200).json({
-      success: true,
-      user,
-    });
+    res.status(200).json({ success: true, user });
   } catch (error) {
     return next(new ErrorHandler(error.message, 500));
   }
@@ -163,56 +146,44 @@ const updateUserInfo = catchAsyncErrors(async (req, res, next) => {
     const { email, password, phoneNumber, name } = req.body;
 
     const user = await User.findOne({ email }).select("+password");
-
     if (!user) {
       return next(new ErrorHandler("User not found", 400));
     }
 
     const isPasswordValid = await user.comparePassword(password);
-
     if (!isPasswordValid) {
-      return next(
-        new ErrorHandler("Please provide the correct information", 400)
-      );
+      return next(new ErrorHandler("Please provide the correct information", 400));
     }
 
     user.name = name;
     user.phoneNumber = phoneNumber;
-
     await user.save();
 
-    res.status(201).json({
-      success: true,
-      user,
-    });
+    res.status(201).json({ success: true, user });
   } catch (error) {
     return next(new ErrorHandler(error.message, 500));
   }
 });
 
 const updateAvatar = catchAsyncErrors(async (req, res, next) => {
-  let imagePath;
-
   try {
     const existsUser = await User.findById(req.user.id);
-
-    imagePath = existsUser.avatarId;
+    const oldImagePath = existsUser.avatarId;
 
     try {
-      await cloudinary.uploader.destroy(imagePath);
+      await cloudinary.uploader.destroy(oldImagePath);
     } catch (err) {
-      console.log(`failed deleting image:${imagePath}`);
+      console.log(`failed deleting image: ${oldImagePath}`);
     }
 
     let imageFile;
     try {
       const b64 = Buffer.from(req.file.buffer).toString("base64");
-const dataURI = `data:${req.file.mimetype};base64,${b64}`;
-imageFile = await cloudinary.uploader.upload(dataURI);
+      const dataURI = `data:${req.file.mimetype};base64,${b64}`;
+      imageFile = await cloudinary.uploader.upload(dataURI);
     } catch (err) {
-      return next(
-        new ErrorHandler("Could not upload image, please try again.", 500)
-      );
+      console.log("CLOUDINARY ERROR:", err.message);
+      return next(new ErrorHandler("Could not upload image, please try again.", 500));
     }
 
     const user = await User.findByIdAndUpdate(req.user.id, {
@@ -220,10 +191,7 @@ imageFile = await cloudinary.uploader.upload(dataURI);
       avatarId: imageFile.public_id,
     });
 
-    res.status(200).json({
-      success: true,
-      user,
-    });
+    res.status(200).json({ success: true, user });
   } catch (error) {
     return next(new ErrorHandler(error.message, 500));
   }
@@ -238,19 +206,13 @@ const addAddress = catchAsyncErrors(async (req, res, next) => {
     );
 
     if (sameNameAddress) {
-      return next(
-        new ErrorHandler(`${req.body.addressName} address is already exists`)
-      );
+      return next(new ErrorHandler(`${req.body.addressName} address already exists`));
     }
 
     user.addresses.push(req.body);
-
     await user.save();
 
-    res.status(200).json({
-      success: true,
-      user,
-    });
+    res.status(200).json({ success: true, user });
   } catch (error) {
     return next(new ErrorHandler(error.message, 500));
   }
@@ -262,18 +224,11 @@ const deleteAddress = catchAsyncErrors(async (req, res, next) => {
     const addressId = req.params.id;
 
     await User.updateOne(
-      {
-        _id: userId,
-      },
-      {
-        $pull: {
-          addresses: { _id: addressId },
-        },
-      }
+      { _id: userId },
+      { $pull: { addresses: { _id: addressId } } }
     );
 
     const user = await User.findById(userId);
-
     res.status(200).json({ success: true, user });
   } catch (error) {
     return next(new ErrorHandler(error.message, 500));
@@ -285,31 +240,22 @@ const changePassword = catchAsyncErrors(async (req, res, next) => {
     const user = await User.findById(req.user.id).select("+password");
 
     const isPasswordValid = await user.comparePassword(req.body.oldPassword);
-
     if (!isPasswordValid) {
       return next(new ErrorHandler("Old password is incorrect.", 400));
     }
 
     if (req.body.password !== req.body.confirmedPassword) {
-      return next(
-        new ErrorHandler("Password should be the same in both inputs.", 400)
-      );
+      return next(new ErrorHandler("Password should be the same in both inputs.", 400));
     }
 
     if (req.body.password === req.body.oldPassword) {
-      return next(
-        new ErrorHandler("Old and new password shouldn't to be the same.", 400)
-      );
+      return next(new ErrorHandler("Old and new password shouldn't be the same.", 400));
     }
 
     user.password = req.body.password;
-
     await user.save();
 
-    res.status(200).json({
-      success: true,
-      message: "Password changed successfully!",
-    });
+    res.status(200).json({ success: true, message: "Password changed successfully!" });
   } catch (error) {
     return next(new ErrorHandler(error.message, 500));
   }
@@ -318,37 +264,25 @@ const changePassword = catchAsyncErrors(async (req, res, next) => {
 const forgetPassword = catchAsyncErrors(async (req, res, next) => {
   try {
     const { email } = req.body;
-
     const userPayload = await User.findOne({ email }).select("+password");
 
     if (!userPayload) {
       return next(new ErrorHandler("Couldn't find the user", 400));
     }
 
-    const user = {
-      email: userPayload.email,
-    };
-
-    const token = createActivationToken(user);
-
+    const token = createActivationToken({ email: userPayload.email });
     userPayload.resetToken = token;
-
     await userPayload.save();
 
-    const ForgetUrl = `http://localhost:3000/change-forget-password/${token}`;
+    const ForgetUrl = `https://shop-nest-bice.vercel.app/change-forget-password/${token}`;
 
     try {
       await sendMail({
         email: userPayload.email,
         subject: "Forget the password",
-        message: `
-        <h2>Hello there!, Chech this link to change your password <a href="${ForgetUrl}">click me</a>, after 5m it will be unuseable</h2>
-        `,
+        message: `<h2>Hello there! Check this link to change your password: <a href="${ForgetUrl}">click me</a>. It expires in 5 minutes.</h2>`,
       });
-      res.status(201).json({
-        success: true,
-        message: `please check your email to change password!`,
-      });
+      res.status(201).json({ success: true, message: `please check your email to change password!` });
     } catch (error) {
       return next(new ErrorHandler(error.message, 500));
     }
@@ -360,57 +294,46 @@ const forgetPassword = catchAsyncErrors(async (req, res, next) => {
 const changeForgetPassword = catchAsyncErrors(async (req, res, next) => {
   try {
     const { token } = req.params;
-
-    const newUser = jwt.verify(token, "YOUR_SECRET_KEY");
+    const newUser = jwt.verify(token, process.env.JWT_SECRET_KEY);
 
     if (!newUser) {
       return next(new ErrorHandler("Invalid token", 400));
     }
 
     let user = await User.findOne({ email: newUser.email }).select("+password");
-
     if (!user) {
       return next(new ErrorHandler("Couldn't find the user", 400));
     }
 
     const isPasswordValid = await user.comparePassword(req.body.oldPassword);
-
     if (!isPasswordValid) {
       return next(new ErrorHandler("Old password is incorrect.", 400));
     }
 
     if (req.body.password !== req.body.confirmedPassword) {
-      return next(
-        new ErrorHandler("Password should be the same in both inputs.", 400)
-      );
+      return next(new ErrorHandler("Password should be the same in both inputs.", 400));
     }
 
     if (req.body.password === req.body.oldPassword) {
-      return next(
-        new ErrorHandler("Old and new password shouldn't to be the same.", 400)
-      );
+      return next(new ErrorHandler("Old and new password shouldn't be the same.", 400));
     }
 
     if (user.resetToken !== token) {
-      return next(new ErrorHandler("Link Expired!.", 400));
+      return next(new ErrorHandler("Link Expired!", 400));
     }
 
     user.password = req.body.password;
     user.resetToken = null;
-
     await user.save();
 
-    res.status(200).json({
-      success: true,
-      message: "Password changed successfully!",
-    });
+    res.status(200).json({ success: true, message: "Password changed successfully!" });
   } catch (error) {
     return next(new ErrorHandler(error.message, 500));
   }
 });
 
 const createActivationToken = (user) => {
-  return jwt.sign(user, "YOUR_SECRET_KEY", {
+  return jwt.sign(user, process.env.JWT_SECRET_KEY, {
     expiresIn: "5m",
   });
 };
