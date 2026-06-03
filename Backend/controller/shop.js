@@ -256,7 +256,7 @@ const forgetPassword = catchAsyncErrors(async (req, res, next) => {
     userPayload.resetToken = token;
     await userPayload.save();
 
-    const ForgetUrl = `http://localhost:3000/shop/change-forget-password/${token}`;
+    const ForgetUrl = `https://shop-nest-bice.vercel.app/shop/change-forget-password/${token}`;
 
     try {
       await sendMail({
