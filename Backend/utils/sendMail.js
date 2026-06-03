@@ -1,27 +1,14 @@
-const nodemailer = require("nodemailer");
+const { Resend } = require("resend");
 
 const sendMail = async (options) => {
-  const transporter = nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 587,
-    secure: false,
-    auth: {
-      user: process.env.SMTP_MAIL,
-      pass: process.env.SMTP_PASSWORD,
-    },
-    connectionTimeout: 30000,
-    greetingTimeout: 30000,
-    socketTimeout: 30000,
-  });
+  const resend = new Resend(process.env.RESEND_API_KEY);
 
-  const mailOptions = {
-    from: process.env.SMTP_MAIL,
+  await resend.emails.send({
+    from: "ShopNest <onboarding@resend.dev>",
     to: options.email,
     subject: options.subject,
     html: options.message,
-  };
-
-  await transporter.sendMail(mailOptions);
+  });
 };
 
 module.exports = sendMail;
